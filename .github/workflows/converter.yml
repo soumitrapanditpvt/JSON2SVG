@@ -26,17 +26,29 @@ jobs:
       - name: Get modified JSON files
         id: get_files
         run: |
+          # Get the modified .json files from the latest commit
           MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
           echo "Modified JSON files: $MODIFIED_JSON_FILES"
-          echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
+          
+          # Write the output to an environment file for future use
+          echo "json_files=$MODIFIED_JSON_FILES" >> $GITHUB_ENV
 
-      # Step 3: Extract directories from the modified JSON files
+      # Step 3: Extract directories from the modified JSON files using a more robust approach
       - name: Get modified directories
         id: get_dirs
         run: |
-          MODIFIED_FOLDERS=$(echo "${{ steps.get_files.outputs.json_files }}" | xargs -n1 dirname | sort -u)
+          # Loop through each modified file and extract its directory
+          MODIFIED_FOLDERS=""
+          for file in ${{ env.json_files }}; do
+            # Append the directory name of the file to MODIFIED_FOLDERS
+            MODIFIED_FOLDERS="$MODIFIED_FOLDERS $(dirname $file)"
+          done
+
+          # Use tr to convert spaces to newlines, sort uniquely, and remove empty lines
+          MODIFIED_FOLDERS=$(echo "$MODIFIED_FOLDERS" | tr ' ' '\n' | sort -u | sed '/^$/d')
+          
           echo "Modified directories: $MODIFIED_FOLDERS"
-          echo "::set-output name=folders::$MODIFIED_FOLDERS"
+          echo "folders=$MODIFIED_FOLDERS" >> $GITHUB_ENV
 
       # Step 4: Build the Docker image
       - name: Build Docker image
@@ -45,7 +57,7 @@ jobs:
       # Step 5: Run the Docker container for each modified directory
       - name: Run conversion for each modified directory
         run: |
-          for folder in ${{ steps.get_dirs.outputs.folders }}; do
+          for folder in ${{ env.folders }}; do
             echo "Processing folder: $folder"
             docker run --rm -v ${{ github.workspace }}/$folder:/usr/src/app/$folder floorplan_converter python main.py /usr/src/app/$folder
           done
