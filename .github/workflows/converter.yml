@@ -22,7 +22,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Get list of modified JSON files using git log (no need to write to GITHUB_ENV here)
+      # Step 2: Get list of modified JSON files using git log
       - name: Get modified JSON files
         id: get_files
         run: |
@@ -42,11 +42,14 @@ jobs:
           MODIFIED_FOLDERS=""
           
           # Loop through each modified file and extract its directory
-          for file in $MODIFIED_JSON_FILES; do
-            # Append the directory name of the file to MODIFIED_FOLDERS
+          while IFS= read -r file; do
             folder=$(dirname "$file")
+            echo "Found folder: $folder"  # Debugging: Print each folder found
             MODIFIED_FOLDERS="$MODIFIED_FOLDERS $folder"
-          done
+          done <<< "$MODIFIED_JSON_FILES"
+
+          # Print intermediate value of MODIFIED_FOLDERS for debugging
+          echo "Intermediate MODIFIED_FOLDERS value: $MODIFIED_FOLDERS"
 
           # Use tr to convert spaces to newlines, sort uniquely, and remove empty lines
           MODIFIED_FOLDERS=$(echo "$MODIFIED_FOLDERS" | tr ' ' '\n' | sort -u | sed '/^$/d')
