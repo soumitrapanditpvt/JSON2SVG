@@ -26,7 +26,6 @@ jobs:
       - name: Get modified JSON files
         id: get_files
         run: |
-          # Get the modified .json files from the latest commit
           MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
           echo "Modified JSON files: $MODIFIED_JSON_FILES"
           
@@ -37,18 +36,24 @@ jobs:
       - name: Get modified directories
         id: get_dirs
         run: |
-          # Loop through each modified file and extract its directory
+          # Initialize an empty string to store modified folders
           MODIFIED_FOLDERS=""
+          
+          # Loop through each modified file and extract its directory
           for file in ${{ env.json_files }}; do
             # Append the directory name of the file to MODIFIED_FOLDERS
-            MODIFIED_FOLDERS="$MODIFIED_FOLDERS $(dirname $file)"
+            folder=$(dirname "$file")
+            MODIFIED_FOLDERS="$MODIFIED_FOLDERS $folder"
           done
 
           # Use tr to convert spaces to newlines, sort uniquely, and remove empty lines
           MODIFIED_FOLDERS=$(echo "$MODIFIED_FOLDERS" | tr ' ' '\n' | sort -u | sed '/^$/d')
+
+          # Format the variable correctly to avoid newlines or special characters
+          FORMATTED_FOLDERS=$(printf "%s" "$MODIFIED_FOLDERS" | tr '\n' ' ')
           
-          echo "Modified directories: $MODIFIED_FOLDERS"
-          echo "folders=$MODIFIED_FOLDERS" >> $GITHUB_ENV
+          echo "Modified directories: $FORMATTED_FOLDERS"
+          echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
       # Step 4: Build the Docker image
       - name: Build Docker image
