@@ -69,7 +69,8 @@ def convert_folder(folder_path):
         return
 
     # Define the output SVG file name and path
-    output_svg = svgwrite.Drawing(os.path.join(folder_path, "output.svg"))
+    svg_file_path = os.path.join(folder_path,"output.svg")
+    output_svg = svgwrite.Drawing(svg_file_path)
     output_svg.save()
 
     # Create an instance of your existing SVG_Floorplan converter
@@ -81,7 +82,7 @@ def convert_folder(folder_path):
         print(f"An error occurred during conversion: {e}")
 
     # Convert the created SVG file to DXF using Inkscape
-    convert_svg_to_dxf(output_svg)
+    convert_svg_to_dxf(svg_file_path)
 
 
 
