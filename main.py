@@ -1,5 +1,6 @@
 import os
 import sys
+import svgwrite
 from SVG_Floorplan import SVG_Floorplan
 
 def find_file_by_pattern(folder_path, pattern):
@@ -25,6 +26,14 @@ def convert_folder(folder_path):
     Args:
         folder_path (str): Path to the folder containing floorplan and optionally sortplan files.
     """
+
+    print(f"Current working directory: {os.getcwd()}")
+    folder_path = os.path.abspath(folder_path)
+    print(f"Absolute folder path: {folder_path}")
+    # Check if the folder path exists
+    if not os.path.exists(folder_path):
+        print(f"Folder '{folder_path}' does not exist inside the container.")
+        return
     # Look for any file with "floorplan" in its name and a .json extension
     floorplan_file = find_file_by_pattern(folder_path, "floorplan")
     sortplan_file = find_file_by_pattern(folder_path, "sortplan")  # Optional sortplan file
@@ -34,12 +43,13 @@ def convert_folder(folder_path):
         return
 
     # Define the output SVG file name and path
-    output_svg = os.path.join(folder_path, "output.svg")
+    output_svg = svgwrite.Drawing(os.path.join(folder_path, "output.svg"))
+    output_svg.save()
 
     # Create an instance of your existing SVG_Floorplan converter
     # This should trigger the conversion during initialization itself.
     try:
-        converter = SVG_Floorplan(floorplan_file, output_svg, sortplan_file)
+        converter = SVG_Floorplan(floorplan_file=floorplan_file, output_file=os.path.join(folder_path,"output.svg"), sortplan_file=sortplan_file)
         print(f"SVG created and saved at {output_svg}")
     except Exception as e:
         print(f"An error occurred during conversion: {e}")
