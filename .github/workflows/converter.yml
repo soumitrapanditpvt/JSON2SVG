@@ -22,25 +22,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Get list of modified JSON files using git log
+      # Step 2: Get list of modified JSON files using git log (no need to write to GITHUB_ENV here)
       - name: Get modified JSON files
         id: get_files
         run: |
           MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
           echo "Modified JSON files: $MODIFIED_JSON_FILES"
           
-          # Write the output to an environment file for future use
-          echo "json_files=$MODIFIED_JSON_FILES" >> $GITHUB_ENV
+          # Store the modified JSON files as an output for later use
+          echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
 
-      # Step 3: Extract directories from the modified JSON files using a more robust approach
+      # Step 3: Extract directories from the modified JSON files and write only `folders` to GITHUB_ENV
       - name: Get modified directories
         id: get_dirs
         run: |
+          MODIFIED_JSON_FILES="${{ steps.get_files.outputs.json_files }}"
+          
           # Initialize an empty string to store modified folders
           MODIFIED_FOLDERS=""
           
           # Loop through each modified file and extract its directory
-          for file in ${{ env.json_files }}; do
+          for file in $MODIFIED_JSON_FILES; do
             # Append the directory name of the file to MODIFIED_FOLDERS
             folder=$(dirname "$file")
             MODIFIED_FOLDERS="$MODIFIED_FOLDERS $folder"
@@ -50,9 +52,11 @@ jobs:
           MODIFIED_FOLDERS=$(echo "$MODIFIED_FOLDERS" | tr ' ' '\n' | sort -u | sed '/^$/d')
 
           # Format the variable correctly to avoid newlines or special characters
-          FORMATTED_FOLDERS=$(printf "%s" "$MODIFIED_FOLDERS" | tr '\n' ' ')
+          FORMATTED_FOLDERS=$(printf "%s" "$MODIFIED_FOLDERS" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
           
-          echo "Modified directories: $FORMATTED_FOLDERS"
+          echo "Formatted directories: '$FORMATTED_FOLDERS'"
+
+          # Write only the formatted directories to the environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
       # Step 4: Build the Docker image
