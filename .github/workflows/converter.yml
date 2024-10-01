@@ -22,6 +22,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+
+
       # Step 2: Get list of modified JSON files using git log
       - name: Get modified JSON files
         id: get_files
@@ -34,6 +36,9 @@ jobs:
           
           # Write the modified JSON files to the GITHUB_ENV environment file
           echo "json_files=$MODIFIED_JSON_FILES" >> $GITHUB_ENV
+
+
+          
       # Step 3: Extract directories from the modified JSON files and write only `folders` to GITHUB_ENV
       - name: Get modified directories
         id: get_dirs
@@ -64,9 +69,15 @@ jobs:
           # Write only the formatted directories to the environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
+
+
+
       # Step 4: Build the Docker image
       - name: Build Docker image
         run: docker build -t floorplan_converter .
+
+
+        
 
       # Step 5: Run the Docker container for each modified directory
       - name: Run conversion for each modified directory
@@ -75,6 +86,10 @@ jobs:
             echo "Processing folder: $folder"
             docker run --rm -v ${{ github.workspace }}/$folder:/usr/src/app/$folder floorplan_converter python main.py /usr/src/app/$folder
           done
+
+
+
+
 
       # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
       - name: Commit and Push SVGs
