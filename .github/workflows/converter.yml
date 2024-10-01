@@ -13,6 +13,8 @@ on:
     paths:
       - '**/*.json'
 
+  workflow_dispatch:
+  
 jobs:
   build-and-convert:
     runs-on: ubuntu-latest
