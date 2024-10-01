@@ -26,12 +26,14 @@ jobs:
       - name: Get modified JSON files
         id: get_files
         run: |
+          # Capture the modified JSON files using git log
           MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
-          echo "Modified JSON files: $MODIFIED_JSON_FILES"
+    
+          # Debugging: Print the exact list of modified files
+          echo "Raw MODIFIED_JSON_FILES: $MODIFIED_JSON_FILES"
           
-          # Store the modified JSON files as an output for later use
-          echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
-
+          # Write the modified JSON files to the GITHUB_ENV environment file
+          echo "json_files=$MODIFIED_JSON_FILES" >> $GITHUB_ENV
       # Step 3: Extract directories from the modified JSON files and write only `folders` to GITHUB_ENV
       - name: Get modified directories
         id: get_dirs
