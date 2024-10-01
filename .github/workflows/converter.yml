@@ -1,4 +1,4 @@
-name: SVG Conversion Workflow
+name: SVG Conversion Workflow with Inkscape
 
 on:
   push:
@@ -22,38 +22,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-
-
-      # Step 2: Get list of modified JSON files using git log
+      # Step 2: Get list of modified JSON files using git log and format them correctly
       - name: Get modified JSON files
         id: get_files
         run: |
           # Capture the modified JSON files using git log
           MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
-    
+
           # Debugging: Print the exact list of modified files
           echo "Raw MODIFIED_JSON_FILES: $MODIFIED_JSON_FILES"
-          
-          # Write the modified JSON files to the GITHUB_ENV environment file
-          echo "json_files=$MODIFIED_JSON_FILES" >> $GITHUB_ENV
 
+          # Replace newlines with a single space to create a properly formatted string
+          FORMATTED_JSON_FILES=$(echo "$MODIFIED_JSON_FILES" | tr '\n' ' ')
 
-          
-      # Step 3: Extract directories from the modified JSON files and write only `folders` to GITHUB_ENV
+          # Debugging: Print the formatted JSON files
+          echo "Formatted MODIFIED_JSON_FILES: $FORMATTED_JSON_FILES"
+
+          # Write the formatted JSON files to the GITHUB_ENV environment file
+          echo "json_files=$FORMATTED_JSON_FILES" >> $GITHUB_ENV
+
+      # Step 3: Extract directories from the modified JSON files and store them in GITHUB_ENV
       - name: Get modified directories
         id: get_dirs
         run: |
-          MODIFIED_JSON_FILES="${{ steps.get_files.outputs.json_files }}"
-          
+          # Access the json_files environment variable
+          MODIFIED_JSON_FILES="${{ env.json_files }}"
+
           # Initialize an empty string to store modified folders
           MODIFIED_FOLDERS=""
-          
+
           # Loop through each modified file and extract its directory
-          while IFS= read -r file; do
+          for file in $MODIFIED_JSON_FILES; do
             folder=$(dirname "$file")
             echo "Found folder: $folder"  # Debugging: Print each folder found
             MODIFIED_FOLDERS="$MODIFIED_FOLDERS $folder"
-          done <<< "$MODIFIED_JSON_FILES"
+          done
 
           # Print intermediate value of MODIFIED_FOLDERS for debugging
           echo "Intermediate MODIFIED_FOLDERS value: $MODIFIED_FOLDERS"
@@ -63,21 +66,16 @@ jobs:
 
           # Format the variable correctly to avoid newlines or special characters
           FORMATTED_FOLDERS=$(printf "%s" "$MODIFIED_FOLDERS" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
-          
+
+          # Debugging: Print the formatted folders for verification
           echo "Formatted directories: '$FORMATTED_FOLDERS'"
 
-          # Write only the formatted directories to the environment file
+          # Write only the formatted directories to the GITHUB_ENV environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
-
-
-
 
       # Step 4: Build the Docker image
       - name: Build Docker image
         run: docker build -t floorplan_converter .
-
-
-        
 
       # Step 5: Run the Docker container for each modified directory
       - name: Run conversion for each modified directory
@@ -87,15 +85,14 @@ jobs:
             docker run --rm -v ${{ github.workspace }}/$folder:/usr/src/app/$folder floorplan_converter python main.py /usr/src/app/$folder
           done
 
-
-
-
-
       # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
       - name: Commit and Push SVGs
+        env:
+          PAT: ${{ secrets.PAT }}  # Use the PAT from the secrets
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
           git add **/*.svg
           git commit -m "Add generated SVG files"
-          git push
+          git push origin main
