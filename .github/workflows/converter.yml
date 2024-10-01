@@ -1,4 +1,4 @@
-name: JSON Conversion Workflow
+name: SVG Conversion Workflow
 
 on:
   push:
@@ -22,12 +22,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Get list of modified or added JSON files
+      # Step 2: Get list of modified or added JSON files using HEAD references
       - name: Get modified JSON files
         id: get_files
         run: |
-          # List all .json files that were modified in the commit
-          MODIFIED_JSON_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- '*.json')
+          MODIFIED_JSON_FILES=$(git diff --name-only HEAD^ HEAD -- '*.json')
           echo "Modified JSON files: $MODIFIED_JSON_FILES"
           echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
 
