@@ -1,0 +1,61 @@
+name: JSON Conversion Workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.json'  # Trigger the workflow for any .json file change in any directory
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.json'
+
+jobs:
+  build-and-convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Get list of modified or added JSON files
+      - name: Get modified JSON files
+        id: get_files
+        run: |
+          # List all .json files that were modified in the commit
+          MODIFIED_JSON_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- '*.json')
+          echo "Modified JSON files: $MODIFIED_JSON_FILES"
+          echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
+
+      # Step 3: Extract directories from the modified JSON files
+      - name: Get modified directories
+        id: get_dirs
+        run: |
+          MODIFIED_FOLDERS=$(echo "${{ steps.get_files.outputs.json_files }}" | xargs -n1 dirname | sort -u)
+          echo "Modified directories: $MODIFIED_FOLDERS"
+          echo "::set-output name=folders::$MODIFIED_FOLDERS"
+
+      # Step 4: Build the Docker image
+      - name: Build Docker image
+        run: docker build -t floorplan_converter .
+
+      # Step 5: Run the Docker container for each modified directory
+      - name: Run conversion for each modified directory
+        run: |
+          for folder in ${{ steps.get_dirs.outputs.folders }}; do
+            echo "Processing folder: $folder"
+            docker run --rm -v ${{ github.workspace }}/$folder:/usr/src/app/$folder floorplan_converter python main.py /usr/src/app/$folder
+          done
+
+      # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
+      - name: Commit and Push SVGs
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add **/*.svg
+          git commit -m "Add generated SVG files"
+          git push
