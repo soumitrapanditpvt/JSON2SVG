@@ -23,33 +23,6 @@ def convert_svg_to_dxf(svg_file: str):
 
 
 
-def main(folder_path):
-    """
-    Main function that handles the entire workflow:
-    - Creates the SVG floorplan using the provided folder path.
-    - Converts the SVG file to DXF format using Inkscape.
-    """
-    # Define output SVG file path
-    output_svg = os.path.join(folder_path, "output.svg")
-
-    # Create the SVG floorplan object and generate the SVG file
-    svg_floorplan = SVG_Floorplan(json_file=os.path.join(folder_path, 'floorplan.json'), output_file=output_svg)
-
-    # Convert the created SVG file to DXF using Inkscape
-    convert_svg_to_dxf(output_svg)
-
-
-
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) != 2:
-        print("Usage: python main.py <folder_path>")
-        sys.exit(1)
-
-    folder = sys.argv[1]
-    main(folder)
-
-
 
 
 def find_file_by_pattern(folder_path, pattern):
@@ -106,6 +79,11 @@ def convert_folder(folder_path):
         print(f"SVG created and saved at {output_svg}")
     except Exception as e:
         print(f"An error occurred during conversion: {e}")
+
+    # Convert the created SVG file to DXF using Inkscape
+    convert_svg_to_dxf(output_svg)
+
+
 
 
 
