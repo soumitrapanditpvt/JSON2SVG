@@ -22,11 +22,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Get list of modified or added JSON files using HEAD references
+      # Step 2: Get list of modified JSON files using git log
       - name: Get modified JSON files
         id: get_files
         run: |
-          MODIFIED_JSON_FILES=$(git diff --name-only HEAD^ HEAD -- '*.json')
+          MODIFIED_JSON_FILES=$(git log -m -1 --name-only --pretty="" -- '*.json')
           echo "Modified JSON files: $MODIFIED_JSON_FILES"
           echo "::set-output name=json_files::$MODIFIED_JSON_FILES"
 
