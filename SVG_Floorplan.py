@@ -19,7 +19,7 @@ class SVG_Floorplan:
         #Initiate Drawing Object
         self.svg = svgwrite.Drawing(output_file,size=("100%","100%"))
         self.unit = "cm"
-        self.scale = 1
+        self.scale = 100
 
         #Set Robot and bin Dimensions (in Meters):
         self.node_width = 0.8 * self.scale
@@ -130,6 +130,11 @@ class SVG_Floorplan:
         for cell in floorplan.cells.values():
             self.node_coords.append(cell.pose)
 
+        #Scale Coordinates:
+        for coord in self.node_coords:
+            coord[0] = coord[0] * self.scale
+            coord[1] = coord[1] * self.scale
+
 
 
 
@@ -164,13 +169,13 @@ class SVG_Floorplan:
 
         for x,y,rad in self.node_coords:
             if x<self.x_min:
-                self.x_min = x * self.scale
+                self.x_min = x 
             if x>self.x_max:
-                self.x_max = x * self.scale
+                self.x_max = x 
             if y<self.y_min:
-               self. y_min = y * self.scale
+               self. y_min = y 
             if y>self.y_max:
-                self.y_max = y * self.scale
+                self.y_max = y 
 
 
 
@@ -179,8 +184,8 @@ class SVG_Floorplan:
     def __draw_arrow(self,coords):
         # Draw the line (arrow shaft)
         #Scaling:
-        coords[0] = coords[0]*self.scale
-        coords[1] = coords[1]*self.scale
+        #coords[0] = coords[0]*self.scale
+        #coords[1] = coords[1]*self.scale
         
         #Drawing
         width = self.node_width 
@@ -203,8 +208,8 @@ class SVG_Floorplan:
 
     #Draw an Isolated Node:
     def __draw_node(self,coords,node_type):
-        x_pos = coords[0] * self.scale
-        y_pos = coords[1] * self.scale
+        x_pos = coords[0] 
+        y_pos = coords[1] 
         theta = np.degrees(coords[2])
         svg = self.svg
 
@@ -257,8 +262,8 @@ class SVG_Floorplan:
     #Draw an Isolated Bin
     def __draw_bin(self,bin_coord, bin_type, bin_side):
         #Scaling:
-        bin_coord[0] = bin_coord[0] * self.scale
-        bin_coord[1] = bin_coord[1] * self.scale
+        #bin_coord[0] = bin_coord[0] * self.scale
+        #bin_coord[1] = bin_coord[1] * self.scale
 
         if self.floorplan_file==None:
             return
@@ -268,11 +273,7 @@ class SVG_Floorplan:
         node_center = (bin_coord[0],bin_coord[1])
         theta = np.degrees(bin_coord[2])
 
-        if  bin_type == "output":
-            bin_width = self.bin_width
-            bin_height = self.bin_height
-        
-        elif bin_type == "input":
+        if  bin_type == "input":
             bin_width = 1 * self.scale
             bin_height = 1 * self.scale
         else:
@@ -353,4 +354,6 @@ class SVG_Floorplan:
         self.__draw_all_bins()
         #self.__draw_all_nodes()
         #self.__draw_all_lines()
-        
+    
+
+    #Convert SVG file to DXF File

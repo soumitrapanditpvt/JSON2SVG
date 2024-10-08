@@ -82,7 +82,7 @@ def convert_folder(folder_path):
         print(f"An error occurred during conversion: {e}")
 
     # Convert the created SVG file to DXF using Inkscape
-    convert_svg_to_dxf(svg_file_path)
+    #convert_svg_to_dxf(svg_file_path)
 
 
 
