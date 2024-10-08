@@ -24,14 +24,18 @@ jobs:
       image: ghcr.io/primevisiontechnology-com/pvt-converter-gh-buildimage-python-3.12:latest
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.GHCR_PAT }}  # Use the GitHub token for authentication
+        password: ${{ secrets.GHCR_PAT }}  # Use the PAT stored in the repository secrets
 
     steps:
       # Step 1: Check out the repository code
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Get list of modified JSON files using git log and format them correctly
+      # Step 2: Mark the repository as a safe directory for Git
+      - name: Mark repository as safe for Git
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      # Step 3: Get list of modified JSON files using git log and format them correctly
       - name: Get modified JSON files
         id: get_files
         run: |
@@ -50,7 +54,7 @@ jobs:
           # Write the formatted JSON files to the GITHUB_ENV environment file
           echo "json_files=$FORMATTED_JSON_FILES" >> $GITHUB_ENV
 
-      # Step 3: Extract directories from the modified JSON files and store them in GITHUB_ENV
+      # Step 4: Extract directories from the modified JSON files and store them in GITHUB_ENV
       - name: Get modified directories
         id: get_dirs
         run: |
@@ -82,7 +86,7 @@ jobs:
           # Write only the formatted directories to the GITHUB_ENV environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
-      # Step 4: Run the conversion script for each modified directory
+      # Step 5: Run the conversion script for each modified directory
       - name: Run conversion for each modified directory
         run: |
           for folder in ${{ env.folders }}; do
@@ -90,14 +94,24 @@ jobs:
             python main.py /usr/src/app/$folder
           done
 
-      # Step 5: Commit and push changes (e.g., new SVG files) back to the repository
+      # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
       - name: Commit and Push SVGs
         env:
-          PAT: ${{ secrets.PAT }}  # Use the PAT from the secrets
+          PAT: ${{ secrets.GHCR_PAT }}  # Use the PAT from the secrets
         run: |
+          # Configure Git user and email for committing changes
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure the repository is marked as safe for Git
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+          
+          # Set remote URL to use the PAT for authentication
           git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
+          
+          # Add and commit the newly generated SVG and DXF files
           git add **/*.svg **/*.dxf
           git commit -m "Add generated SVG and DXF files"
+          
+          # Push changes back to the main branch
           git push origin main
