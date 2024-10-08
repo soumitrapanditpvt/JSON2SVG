@@ -1,4 +1,4 @@
-name: SVG Conversion Workflow with Inkscape
+name: SVG Conversion Workflow with Pre-Built Docker Image
 
 on:
   push:
@@ -14,10 +14,17 @@ on:
       - '**/*.json'
 
   workflow_dispatch:
-  
+
 jobs:
   build-and-convert:
     runs-on: ubuntu-latest
+
+    # Use the pre-built Docker image from GitHub Container Registry
+    container:
+      image: ghcr.io/primevisiontechnology-com/pvt-converter-gh-buildimage-python-3.12:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}  # Use the GitHub token for authentication
 
     steps:
       # Step 1: Check out the repository code
@@ -75,19 +82,15 @@ jobs:
           # Write only the formatted directories to the GITHUB_ENV environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
-      # Step 4: Build the Docker image
-      - name: Build Docker image
-        run: docker build -t floorplan_converter .
-
-      # Step 5: Run the Docker container for each modified directory
+      # Step 4: Run the conversion script for each modified directory
       - name: Run conversion for each modified directory
         run: |
           for folder in ${{ env.folders }}; do
             echo "Processing folder: $folder"
-            docker run --rm -v ${{ github.workspace }}/$folder:/usr/src/app/$folder floorplan_converter python main.py /usr/src/app/$folder
+            python main.py /usr/src/app/$folder
           done
 
-      # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
+      # Step 5: Commit and push changes (e.g., new SVG files) back to the repository
       - name: Commit and Push SVGs
         env:
           PAT: ${{ secrets.PAT }}  # Use the PAT from the secrets
