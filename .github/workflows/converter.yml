@@ -110,7 +110,7 @@ jobs:
           git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
           
           # Add and commit the newly generated SVG and DXF files
-          git add **/*.svg **/*.dxf
+          git add **/*.svg 
           git commit -m "Add generated SVG and DXF files"
           
           # Push changes back to the main branch
