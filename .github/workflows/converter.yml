@@ -87,12 +87,15 @@ jobs:
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
       # Step 5: Install Azure CLI for uploading files to Azure Storage (without sudo)
-      - name: Install Azure CLI
+      - name: "Install Az CLI"
         run: |
-          apt-get update && apt-get install -y apt-transport-https lsb-release software-properties-common dirmngr
-          echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/azure-cli.list
-          apt-key adv --keyserver packages.microsoft.com --recv-keys EB3E94ADBE1229CF
-          apt-get update && apt-get install -y azure-cli
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       # Step 6: Check and Create 'converted-floorplans' Directory in Azure
       - name: Check and Create 'converted-floorplans' Directory in Azure
