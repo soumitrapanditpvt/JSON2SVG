@@ -86,32 +86,40 @@ jobs:
           # Write only the formatted directories to the GITHUB_ENV environment file
           echo "folders=$FORMATTED_FOLDERS" >> $GITHUB_ENV
 
-      # Step 5: Run the conversion script for each modified directory
-      - name: Run conversion for each modified directory
+      # Step 5: Install Azure CLI for uploading files to Azure Storage
+      - name: Install Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+      # Step 6: Check and Create 'converted-floorplans' Directory in Azure
+      - name: Check and Create 'converted-floorplans' Directory in Azure
+        run: |
+          if ! az storage blob list --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+                                    --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
+                                    --container-name floorplan-resources \
+                                    --prefix "floorplans/converted-floorplans/" | grep -q "converted-floorplans"; then
+            echo "'converted-floorplans' directory not found. Creating it..."
+            echo "Creating placeholder blob to represent 'converted-floorplans' directory..."
+            echo "placeholder" > placeholder.txt
+            az storage blob upload --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+                                   --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
+                                   --container-name floorplan-resources \
+                                   --file placeholder.txt \
+                                   --name "floorplans/converted-floorplans/placeholder.txt"
+            rm placeholder.txt
+          fi
+
+      # Step 7: Upload SVG files to Azure Storage using correct path structure
+      - name: Upload SVGs to Azure Storage
+        if: ${{ env.folders }}  # Corrected condition to check if env.folders is not empty
         run: |
           for folder in ${{ env.folders }}; do
-            echo "Processing folder: $folder"
-            python main.py /usr/src/app/$folder
+            echo "Uploading contents of folder: $folder to Azure Storage"
+            FULL_PATH=$(realpath /usr/src/app/$folder)
+            FOLDER_NAME=$(basename $folder)
+            az storage blob upload-batch --account-name ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }} \
+                                         --account-key ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }} \
+                                         --destination floorplan-resources/floorplans/converted-floorplans/$FOLDER_NAME \
+                                         --source "$FULL_PATH" \
+                                         --pattern "**/*"
           done
-
-      # Step 6: Commit and push changes (e.g., new SVG files) back to the repository
-      - name: Commit and Push SVGs
-        env:
-          PAT: ${{ secrets.GHCR_PAT }}  # Use the PAT from the secrets
-        run: |
-          # Configure Git user and email for committing changes
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Ensure the repository is marked as safe for Git
-          git config --global --add safe.directory $GITHUB_WORKSPACE
-          
-          # Set remote URL to use the PAT for authentication
-          git remote set-url origin https://x-access-token:${PAT}@github.com/${{ github.repository }}.git
-          
-          # Add and commit the newly generated SVG and DXF files
-          git add **/*.svg 
-          git commit -m "Add generated SVG and DXF files"
-          
-          # Push changes back to the main branch
-          git push origin main
