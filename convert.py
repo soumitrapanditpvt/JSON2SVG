@@ -30,7 +30,6 @@ test_floorplan9 = "USPS-Indy-left-floorplan.json"
 test_floorplan10 = "USPS-Indy-right-floorplan.json"
 test_floorplan11 = "floorplan 65.json"
 test_floorplan12 = "floorplan 71.json"
-test_floorplan12 = "
 
 
 
