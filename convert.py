@@ -10,11 +10,11 @@ import os
 
 # %%
 #Path Variables
-floorplan_path = r"C:\Users\smtrp\PrimeVision\PyVision\JSON_to_SVG\Floorplan_JSON_Files\\"
-sortplan_path = r"C:\Users\smtrp\PrimeVision\PyVision\JSON_to_SVG\Sortplan_JSON_Files\\"
-svg_file_path = r"C:\Users\smtrp\PrimeVision\PyVision\JSON_to_SVG\SVG_Files\\"
+floorplan_path = #r"C:\Users\usr\PrimeVision\PyVision\JSON_to_SVG\Floorplan_JSON_Files\\"
+sortplan_path = #r"C:\Users\usr\PrimeVision\PyVision\JSON_to_SVG\Sortplan_JSON_Files\\"
+svg_file_path = #r"C:\Users\usr\PrimeVision\PyVision\JSON_to_SVG\SVG_Files\\"
 
-os.path.exists(floorplan_path) and os.path.exists(sortplan_path) and os.path.exists(svg_file_path)
+print(os.path.exists(floorplan_path) and os.path.exists(sortplan_path) and os.path.exists(svg_file_path))
 
 # %%
 #Floorplans:
@@ -66,11 +66,10 @@ svg_floorplan = SVG_Floorplan(floorplan_file=floorplan,sortplan_file=sortplan,sv
 print(svg_floorplan)
 
 # %%
-svg_floorplan.x_max
-svg_floorplan.x_min
+print(svg_floorplan.x_max)
+print(svg_floorplan.x_min)
 
 # %%
-svg_floorplan.y_max
 
 # %%
 
