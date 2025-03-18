@@ -10,16 +10,19 @@ from Floorplan import Floorplan
 import json
 
 class SVG_Floorplan:
-    def __init__(self, output_file: str, floorplan_file: str, sortplan_file = None ):
+    def __init__(self, svg_file: str, floorplan_file: str, sortplan_file = None ):
         #Set floorplan vars
         self.floorplan_file = floorplan_file
         self.floorplan_data = json.load(open(self.floorplan_file,'r'))
         self.floorplan = Floorplan(self.floorplan_file)
 
         #Initiate Drawing Object
-        self.svg = svgwrite.Drawing(output_file,size=("100%","100%"))
+        self.svg = svgwrite.Drawing(svg_file,size=("100%","100%"))
         self.unit = "cm"
         self.scale = 100
+
+        #Zone Rotation
+        self.zone_rotation = 0
 
         #Set Robot and bin Dimensions (in Meters):
         self.node_width = 0.8 * self.scale
@@ -35,6 +38,7 @@ class SVG_Floorplan:
         self.svg_nodes = [] #Stores svg.rect objects
 
         #Extraction Methods:
+        self.__extract_zone_transform()
         self.__extract_node_coords()
         
         if sortplan_file is not None:
@@ -73,10 +77,9 @@ class SVG_Floorplan:
         clearance_height = self.bin_height+self.node_height
         clearance_width = self.bin_width+self.node_width
         #viewbox(top_x,min_y,x_range,y_range)
-        if self.x_min < 0:
-            min_x = self.x_min-clearance_width
-        else:
-            min_x = self.x_min + clearance_width
+      
+        min_x = self.x_min-clearance_width
+        
         
         if self.y_min < 0:
             if self.y_max > 0:
@@ -122,7 +125,12 @@ class SVG_Floorplan:
 
 
 
-
+    #Extract Zone Transformation(x,y,rad):
+    def __extract_zone_transform(self):
+        floorplan = self.floorplan
+        zone_pose = floorplan.zones["output_gate_1"].zone_pose
+        print(f"zone pose is {zone_pose}")
+        self.zone_rotation = zone_pose[2]
 
     #Extract Node Coordinates (x,y,rad):
     def __extract_node_coords(self):
@@ -130,10 +138,11 @@ class SVG_Floorplan:
         for cell in floorplan.cells.values():
             self.node_coords.append(cell.pose)
 
-        #Scale Coordinates:
+        #Scale Coordinates and adjust for zone rotation:
         for coord in self.node_coords:
             coord[0] = coord[0] * self.scale
             coord[1] = coord[1] * self.scale
+            coord[2] = coord[2] - self.zone_rotation
 
 
 
@@ -350,10 +359,9 @@ class SVG_Floorplan:
     def __draw_all_elements(self):
         for node in self.floorplan.cells.values():
             self.__draw_node(coords=node.pose, node_type = node.cell_type)
-        self.__draw_all_lines()
         self.__draw_all_bins()
         #self.__draw_all_nodes()
-        #self.__draw_all_lines()
+        self.__draw_all_lines()
     
 
     #Convert SVG file to DXF File
